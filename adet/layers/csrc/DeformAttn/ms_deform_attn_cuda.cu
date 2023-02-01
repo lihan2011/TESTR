@@ -53,7 +53,7 @@ at::Tensor ms_deform_attn_cuda_forward(
     auto output = at::zeros({batch, num_query, num_heads * num_levels * num_point, channels}, value.options());
 
     const int batch_n = im2col_step_;
-    auto output_n = output.view({batch/im2col_step_, batch_n, num_query, num_heads, channels});
+    auto output_n = output.view({batch/im2col_step_, batch_n, num_query, num_heads * num_levels * num_point, channels});
     auto per_value_size = spatial_size * num_heads * channels;
     auto per_sample_loc_size = num_query * num_heads * num_levels * num_point * 2;
     auto per_attn_weight_size = num_query * num_heads * num_levels * num_point;

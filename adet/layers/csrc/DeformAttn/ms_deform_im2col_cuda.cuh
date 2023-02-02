@@ -262,7 +262,12 @@ __global__ void ms_deformable_im2col_gpu_kernel(const int n,
     _temp /= num_query;
     const int b_col = _temp;
 
-    scalar_t *data_col_ptr = data_col +  m_col * num_levels * num_point * channels + c_col;
+    int m_stride = num_levels * num_point * channels;
+    int q_stride = m_stride * num_heads;
+    int b_stride = q_stride * num_query
+
+    scalar_t *data_col_ptr = data_col +  b_col * b_stride + q_col * q_stride + m_col * m_stride + c_col;
+    
     int data_weight_ptr = sampling_index * num_levels * num_point;
     int data_loc_w_ptr = data_weight_ptr << 1;
     const int qid_stride = num_heads * channels;

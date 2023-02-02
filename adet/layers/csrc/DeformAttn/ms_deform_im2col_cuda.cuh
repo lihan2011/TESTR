@@ -262,13 +262,18 @@ __global__ void ms_deformable_im2col_gpu_kernel(const int n,
     _temp /= num_query;
     const int b_col = _temp;
 
-    scalar_t *data_col_ptr = data_col + index;
+    int m_stride = num_levels * num_point * channels;
+    int q_stride = m_stride * num_heads;
+    int b_stride = q_stride * num_query
+
+    scalar_t *data_col_ptr = data_col +  b_col * b_stride + q_col * q_stride + m_col * m_stride + c_col;
+    
     int data_weight_ptr = sampling_index * num_levels * num_point;
     int data_loc_w_ptr = data_weight_ptr << 1;
     const int qid_stride = num_heads * channels;
     const int data_value_ptr_init_offset = b_col * spatial_size * qid_stride;
     scalar_t col = 0;
-    
+    scalar_t* data_col_ptr_lp = data_col_ptr;
     for (int l_col=0; l_col < num_levels; ++l_col)
     {
       const int level_start_id = data_level_start_index[l_col];
@@ -287,14 +292,16 @@ __global__ void ms_deformable_im2col_gpu_kernel(const int n,
 
         if (h_im > -1 && w_im > -1 && h_im < spatial_h && w_im < spatial_w)
         {
-          col += ms_deform_attn_im2col_bilinear(data_value_ptr, spatial_h, spatial_w, num_heads, channels, h_im, w_im, m_col, c_col) * weight;
+          col = ms_deform_attn_im2col_bilinear(data_value_ptr, spatial_h, spatial_w, num_heads, channels, h_im, w_im, m_col, c_col);
         }
 
         data_weight_ptr += 1;
         data_loc_w_ptr += 2;
+        *data_col_ptr_lp = col;
+        data_col_ptr_lp += channels;
       }
     }
-    *data_col_ptr = col;
+    //*data_col_ptr = col;
   }
 }
 
